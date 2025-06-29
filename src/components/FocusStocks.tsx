@@ -34,10 +34,11 @@ export default function FocusStocks({
   // Calculate tag statistics - FIXED
   const getTagStats = () => {
     const tagCounts = {
+      monitor: stocks.filter(s => s.tag === 'monitor').length,
+      watch: stocks.filter(s => s.tag === 'watch').length,
       worked: stocks.filter(s => s.tag === 'worked').length,
-      missed: stocks.filter(s => s.tag === 'missed').length,
       failed: stocks.filter(s => s.tag === 'failed').length,
-      watch: stocks.filter(s => s.tag === 'watch').length
+      missed: stocks.filter(s => s.tag === 'missed').length
     };
     return tagCounts;
   };
@@ -158,7 +159,7 @@ export default function FocusStocks({
             disabled={isRefreshing}
           >
             <RefreshCw className={`w-5 h-5 text-green-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span className="text-green-700 font-medium">Refresh CMP</span>
+            <span className="text-green-700 font-medium">Refresh</span>
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -229,20 +230,24 @@ export default function FocusStocks({
           </div>
           <div className="text-sm space-y-1">
             <div className="flex justify-between">
-              <span>✅ Worked:</span>
-              <span className="font-semibold">{tagStats.worked}</span>
+              <span>🟣 Monitor:</span>
+              <span className="font-semibold">{tagStats.monitor}</span>
             </div>
             <div className="flex justify-between">
-              <span>🟡 Missed:</span>
-              <span className="font-semibold">{tagStats.missed}</span>
+              <span>⏳ Setup Waiting:</span>
+              <span className="font-semibold">{tagStats.watch}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>✅ Entered:</span>
+              <span className="font-semibold">{tagStats.worked}</span>
             </div>
             <div className="flex justify-between">
               <span>🔴 Failed:</span>
               <span className="font-semibold">{tagStats.failed}</span>
             </div>
             <div className="flex justify-between">
-              <span>🔵 Watch:</span>
-              <span className="font-semibold">{tagStats.watch}</span>
+              <span>🟡 Missed Entry:</span>
+              <span className="font-semibold">{tagStats.missed}</span>
             </div>
           </div>
         </div>

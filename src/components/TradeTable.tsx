@@ -204,7 +204,7 @@ export default function TradeTable({
                     disabled={isRefreshing}
                   >
                     <RefreshCw className={`w-4 h-4 text-green-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    <span className="text-green-700 text-sm font-medium">Refresh CMP</span>
+                    <span className="text-green-700 text-sm font-medium">Refresh</span>
                   </button>
                 )}
                 
