@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import SignUpForm from './SignUpForm';
 import OTPVerification from './OTPVerification';
@@ -19,37 +19,13 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   } | null>(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login, signUp, isAuthenticated } = useAuth();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      const redirectPath = localStorage.getItem('redirectAfterLogin') || '/dashboard';
-      localStorage.removeItem('redirectAfterLogin');
-      navigate(redirectPath);
-    }
-  }, [isAuthenticated, navigate]);
-
-  // Set initial view based on URL path
-  useEffect(() => {
-    const path = location.pathname;
-    if (path === '/signup') {
-      setCurrentView('signup');
-    } else {
-      setCurrentView('login');
-    }
-  }, [location.pathname]);
+  const { login, signUp } = useAuth();
 
   const handleLogin = async (email: string, password: string) => {
     try {
       setError('');
       await login(email, password);
-      
-      // Redirect to saved path or dashboard
-      const redirectPath = localStorage.getItem('redirectAfterLogin') || '/dashboard';
-      localStorage.removeItem('redirectAfterLogin');
-      navigate(redirectPath);
+      navigate('/app/dashboard');
     } catch (error: any) {
       if (error.requiresEmailVerification) {
         setPendingVerification({ email, fromLogin: true });
@@ -69,8 +45,7 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
         setPendingVerification({ email, fromLogin: false });
         setCurrentView('otp');
       } else {
-        // Redirect to dashboard
-        navigate('/dashboard');
+        navigate('/app/dashboard');
       }
     } catch (error: any) {
       setError(error.message || 'Sign up failed');
@@ -80,11 +55,7 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   const handleOTPVerified = async () => {
     // After OTP verification, user should be automatically logged in
     setPendingVerification(null);
-    
-    // Redirect to saved path or dashboard
-    const redirectPath = localStorage.getItem('redirectAfterLogin') || '/dashboard';
-    localStorage.removeItem('redirectAfterLogin');
-    navigate(redirectPath);
+    navigate('/app/dashboard');
   };
 
   const handleBackFromOTP = () => {

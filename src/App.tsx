@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import TradeTable from './components/TradeTable';
@@ -13,8 +13,6 @@ import WelcomeNotification from './components/WelcomeNotification';
 import HealthCheck from './components/HealthCheck';
 import MonthFilter from './components/MonthFilter';
 import LandingPage from './pages/LandingPage';
-import RequireAuth from './components/RequireAuth';
-import LoadingSpinner from './components/LoadingSpinner';
 import { useTrades } from './hooks/useTrades';
 import { useFocusStocks } from './hooks/useFocusStocks';
 import { useNotifications } from './hooks/useNotifications';
@@ -77,14 +75,19 @@ function AppContent() {
     }
   }, [isAuthenticated, user]);
 
+  // Show auth container if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <>
+        <AuthContainer onLogin={handleLogin} onSignUp={handleSignUp} />
+        <HealthCheck />
+      </>
+    );
+  }
+
   async function handleLogin(email: string, password: string) {
     await login(email, password);
     setShowWelcomeModal(true);
-    
-    // Redirect to saved path or dashboard
-    const redirectPath = localStorage.getItem('redirectAfterLogin') || '/dashboard';
-    localStorage.removeItem('redirectAfterLogin');
-    window.location.href = redirectPath;
   }
 
   async function handleSignUp(name: string, email: string, password: string) {
@@ -542,71 +545,17 @@ function AppContent() {
 }
 
 function App() {
-  const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
-
-  // Show loading spinner while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" text="Loading your account..." />
-      </div>
-    );
-  }
-
-  return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" /> : <AuthContainer onLogin={() => {}} onSignUp={() => {}} />
-      } />
-      <Route path="/signup" element={
-        isAuthenticated ? <Navigate to="/dashboard" /> : <AuthContainer onLogin={() => {}} onSignUp={() => {}} />
-      } />
-      <Route path="/dashboard" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/trades" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/focus-stocks" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/teams" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/analytics" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/notifications" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="/settings" element={
-        <RequireAuth>
-          <AppContent />
-        </RequireAuth>
-      } />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
-
-export default function AppWrapper() {
   return (
     <Router>
-      <App />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthContainer onLogin={() => {}} onSignUp={() => {}} />} />
+        <Route path="/signup" element={<AuthContainer onLogin={() => {}} onSignUp={() => {}} />} />
+        <Route path="/app/*" element={<AppContent />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }
+
+export default App;
