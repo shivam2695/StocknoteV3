@@ -210,6 +210,7 @@ export const useAuth = () => {
       });
       localStorage.removeItem('currentUser');
       localStorage.removeItem('authToken');
+      localStorage.removeItem('redirectAfterLogin');
       console.log('Logged out, storage cleared');
     }
   };

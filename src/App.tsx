@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import TradeTable from './components/TradeTable';
@@ -20,6 +20,8 @@ import { useAuth } from './hooks/useAuth';
 import { Trade } from './types/Trade';
 import { FocusStockTag } from './components/FocusStockTags';
 import { PlusCircle, Menu, X } from 'lucide-react';
+import RequireAuth from './components/RequireAuth';
+import LoadingSpinner from './components/LoadingSpinner';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -74,16 +76,6 @@ function AppContent() {
       setShowWelcomeNotification(true);
     }
   }, [isAuthenticated, user]);
-
-  // Show auth container if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <>
-        <AuthContainer onLogin={handleLogin} onSignUp={handleSignUp} />
-        <HealthCheck />
-      </>
-    );
-  }
 
   async function handleLogin(email: string, password: string) {
     await login(email, password);
@@ -544,14 +536,62 @@ function AppContent() {
   );
 }
 
+// Auth redirect component
+function AuthRedirect() {
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      if (isAuthenticated) {
+        // Check if there's a saved redirect path
+        const redirectPath = localStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectPath);
+        } else if (location.pathname === '/login' || location.pathname === '/signup') {
+          // If on login/signup page but already authenticated, redirect to dashboard
+          navigate('/app/dashboard');
+        }
+      }
+    }
+  }, [isAuthenticated, loading, navigate, location.pathname]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" text="Loading..." />
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" text="Loading application..." />
+      </div>
+    );
+  }
+
   return (
     <Router>
+      <AuthRedirect />
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<AuthContainer onLogin={() => {}} onSignUp={() => {}} />} />
-        <Route path="/signup" element={<AuthContainer onLogin={() => {}} onSignUp={() => {}} />} />
-        <Route path="/app/*" element={<AppContent />} />
+        <Route path="/login" element={<AuthContainer onLogin={()=>{}} onSignUp={()=>{}} />} />
+        <Route path="/signup" element={<AuthContainer onLogin={()=>{}} onSignUp={()=>{}} />} />
+        <Route path="/app/*" element={
+          <RequireAuth>
+            <AppContent />
+          </RequireAuth>
+        } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

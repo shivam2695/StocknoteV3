@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import SignUpForm from './SignUpForm';
 import OTPVerification from './OTPVerification';
 import ForgotPassword from './ForgotPassword';
 import { useAuth } from '../hooks/useAuth';
+import LoadingSpinner from './LoadingSpinner';
 
 interface AuthContainerProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -19,13 +20,45 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   } | null>(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, signUp } = useAuth();
+  const location = useLocation();
+  const { login, signUp, isAuthenticated, loading } = useAuth();
+
+  // Determine initial view based on URL path
+  useEffect(() => {
+    if (location.pathname === '/signup') {
+      setCurrentView('signup');
+    } else {
+      setCurrentView('login');
+    }
+  }, [location.pathname]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else {
+        navigate('/app/dashboard');
+      }
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" text="Checking authentication..." />
+      </div>
+    );
+  }
 
   const handleLogin = async (email: string, password: string) => {
     try {
       setError('');
       await login(email, password);
-      navigate('/app/dashboard');
+      
+      // Redirect will happen automatically via the useEffect above
     } catch (error: any) {
       if (error.requiresEmailVerification) {
         setPendingVerification({ email, fromLogin: true });
@@ -45,7 +78,7 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
         setPendingVerification({ email, fromLogin: false });
         setCurrentView('otp');
       } else {
-        navigate('/app/dashboard');
+        // Redirect will happen automatically via the useEffect above
       }
     } catch (error: any) {
       setError(error.message || 'Sign up failed');
@@ -55,7 +88,7 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   const handleOTPVerified = async () => {
     // After OTP verification, user should be automatically logged in
     setPendingVerification(null);
-    navigate('/app/dashboard');
+    // Redirect will happen automatically via the useEffect above
   };
 
   const handleBackFromOTP = () => {
@@ -70,6 +103,7 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   const handleBackToLogin = () => {
     setCurrentView('login');
     setError('');
+    navigate('/login', { replace: true });
   };
 
   const handleForgotPassword = () => {
@@ -106,7 +140,10 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
     return (
       <SignUpForm
         onSignUp={handleSignUpRequest}
-        onSwitchToLogin={() => setCurrentView('login')}
+        onSwitchToLogin={() => {
+          setCurrentView('login');
+          navigate('/login', { replace: true });
+        }}
         error={error}
       />
     );
@@ -115,7 +152,10 @@ export default function AuthContainer({ onLogin, onSignUp }: AuthContainerProps)
   return (
     <LoginForm
       onLogin={handleLogin}
-      onSwitchToSignUp={() => setCurrentView('signup')}
+      onSwitchToSignUp={() => {
+        setCurrentView('signup');
+        navigate('/signup', { replace: true });
+      }}
       onForgotPassword={handleForgotPassword}
       error={error}
     />
