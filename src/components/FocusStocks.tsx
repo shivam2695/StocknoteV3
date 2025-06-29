@@ -107,9 +107,15 @@ export default function FocusStocks({
           comparison = a.symbol.localeCompare(b.symbol);
           break;
         case 'return':
-          const returnA = ((a.targetPrice - a.currentPrice) / a.currentPrice) * 100;
-          const returnB = ((b.targetPrice - b.currentPrice) / b.currentPrice) * 100;
-          comparison = returnA - returnB;
+          // Get current market prices if available
+          const aCMP = stockCsvService.getStockBySymbol(a.symbol)?.cmp || a.currentPrice;
+          const bCMP = stockCsvService.getStockBySymbol(b.symbol)?.cmp || b.currentPrice;
+          
+          // Calculate returns based on CMP - Entry Price
+          const aReturn = ((aCMP - a.currentPrice) / a.currentPrice) * 100;
+          const bReturn = ((bCMP - b.currentPrice) / b.currentPrice) * 100;
+          
+          comparison = aReturn - bReturn;
           break;
         case 'date':
         default:
@@ -138,9 +144,14 @@ export default function FocusStocks({
 
   const calculateAveragePotentialReturn = (stockList: FocusStock[]) => {
     if (stockList.length === 0) return 0;
+    
     const totalReturn = stockList.reduce((sum, stock) => {
-      return sum + ((stock.targetPrice - stock.currentPrice) / stock.currentPrice) * 100;
+      // Get current market price if available
+      const cmp = stockCsvService.getStockBySymbol(stock.symbol)?.cmp || stock.currentPrice;
+      // Calculate return based on CMP - Entry Price
+      return sum + ((cmp - stock.currentPrice) / stock.currentPrice) * 100;
     }, 0);
+    
     return totalReturn / stockList.length;
   };
 

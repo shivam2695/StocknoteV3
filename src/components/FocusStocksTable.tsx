@@ -78,8 +78,11 @@ export default function FocusStocksTable({
     });
   };
 
-  const calculatePotentialReturn = (currentPrice: number, targetPrice: number) => {
-    return ((targetPrice - currentPrice) / currentPrice) * 100;
+  const calculateReturn = (stock: FocusStock) => {
+    // Get current market price if available, otherwise use stored current price
+    const currentCMP = stockPrices[stock.symbol] || stock.currentPrice;
+    // Calculate return based on CMP - Entry Price
+    return ((currentCMP - stock.currentPrice) / stock.currentPrice) * 100;
   };
 
   const calculateAging = (dateString: string) => {
@@ -185,10 +188,8 @@ export default function FocusStocksTable({
                 const aging = calculateAging(stock.dateAdded);
                 // Get CMP from Google Sheet
                 const currentCMP = stockPrices[stock.symbol];
-                // Calculate potential return using Google Sheet CMP if available
-                const potentialReturn = currentCMP 
-                  ? calculatePotentialReturn(currentCMP, stock.targetPrice)
-                  : calculatePotentialReturn(stock.currentPrice, stock.targetPrice);
+                // Calculate current return using CMP - Entry Price
+                const currentReturn = calculateReturn(stock);
                 
                 return (
                   <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
@@ -249,16 +250,20 @@ export default function FocusStocksTable({
                       </div>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <IndianRupee className="w-3 h-3 text-gray-500" />
-                        <span className="text-gray-900">{stock.targetPrice.toLocaleString('en-IN')}</span>
-                      </div>
+                      {stock.targetPrice ? (
+                        <div className="flex items-center justify-center space-x-1">
+                          <IndianRupee className="w-3 h-3 text-gray-500" />
+                          <span className="text-gray-900">{stock.targetPrice.toLocaleString('en-IN')}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex items-center justify-center space-x-1">
-                        <TrendingUp className={`w-3 h-3 ${getReturnColor(potentialReturn)}`} />
-                        <span className={`font-semibold text-xs ${getReturnColor(potentialReturn)}`}>
-                          {potentialReturn.toFixed(1)}%
+                        <TrendingUp className={`w-3 h-3 ${getReturnColor(currentReturn)}`} />
+                        <span className={`font-semibold text-xs ${getReturnColor(currentReturn)}`}>
+                          {currentReturn.toFixed(1)}%
                         </span>
                       </div>
                     </td>

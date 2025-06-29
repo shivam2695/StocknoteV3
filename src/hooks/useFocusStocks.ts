@@ -48,9 +48,6 @@ export function useFocusStocks(userEmail?: string) {
       if (!stockData.currentPrice || stockData.currentPrice <= 0) {
         throw new Error('Current price must be greater than 0');
       }
-      if (!stockData.targetPrice || stockData.targetPrice <= 0) {
-        throw new Error('Target price must be greater than 0');
-      }
       if (!stockData.reason || !stockData.reason.trim()) {
         throw new Error('Reason is required');
       }
@@ -58,11 +55,16 @@ export function useFocusStocks(userEmail?: string) {
         throw new Error('Date added is required');
       }
 
+      // Target price is now optional
+      const targetPrice = stockData.targetPrice || 0;
+
       const newStock: FocusStock = {
         ...stockData,
         id: Date.now().toString(),
         // Ensure symbol is standardized
-        symbol: stockData.symbol.trim().toUpperCase()
+        symbol: stockData.symbol.trim().toUpperCase(),
+        // Set target price (can be 0 if not provided)
+        targetPrice
       };
 
       const updatedStocks = [...focusStocks, newStock];
@@ -85,9 +87,6 @@ export function useFocusStocks(userEmail?: string) {
       if (!stockData.currentPrice || stockData.currentPrice <= 0) {
         throw new Error('Current price must be greater than 0');
       }
-      if (!stockData.targetPrice || stockData.targetPrice <= 0) {
-        throw new Error('Target price must be greater than 0');
-      }
       if (!stockData.reason || !stockData.reason.trim()) {
         throw new Error('Reason is required');
       }
@@ -95,12 +94,17 @@ export function useFocusStocks(userEmail?: string) {
         throw new Error('Date added is required');
       }
 
+      // Target price is now optional
+      const targetPrice = stockData.targetPrice || 0;
+
       const updatedStocks = focusStocks.map(stock => 
         stock.id === stockId ? { 
           ...stockData, 
           id: stockId,
           // Ensure symbol is standardized
-          symbol: stockData.symbol.trim().toUpperCase()
+          symbol: stockData.symbol.trim().toUpperCase(),
+          // Set target price (can be 0 if not provided)
+          targetPrice
         } : stock
       );
       

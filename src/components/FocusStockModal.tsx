@@ -57,7 +57,7 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
     if (stock) {
       setFormData({
         symbol: stock.symbol,
-        targetPrice: stock.targetPrice.toString(),
+        targetPrice: stock.targetPrice ? stock.targetPrice.toString() : '',
         currentPrice: stock.currentPrice.toString(),
         reason: stock.reason || '',
         dateAdded: stock.dateAdded,
@@ -164,7 +164,7 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
     const newErrors: Record<string, string> = {};
 
     // Symbol validation
-    if (!formData.symbol.trim()) {
+    if (!formData.symbol || !formData.symbol.trim()) {
       newErrors.symbol = 'Symbol is required';
     } else if (formData.symbol.trim().length > 20) {
       newErrors.symbol = 'Symbol cannot exceed 20 characters';
@@ -180,10 +180,8 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
       }
     }
 
-    // Target price validation
-    if (!formData.targetPrice) {
-      newErrors.targetPrice = 'Target price is required';
-    } else {
+    // Target price validation - now optional
+    if (formData.targetPrice) {
       const price = parseFloat(formData.targetPrice);
       if (isNaN(price) || price <= 0) {
         newErrors.targetPrice = 'Target price must be greater than 0';
@@ -246,7 +244,7 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
     try {
       const stockData: Omit<FocusStock, 'id'> = {
         symbol: formData.symbol.toUpperCase().trim(),
-        targetPrice: parseFloat(formData.targetPrice),
+        targetPrice: formData.targetPrice ? parseFloat(formData.targetPrice) : 0,
         currentPrice: parseFloat(formData.currentPrice),
         reason: formData.reason.trim(),
         dateAdded: formData.dateAdded,
@@ -453,7 +451,7 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Target Price (₹) *
+                Target Price (₹) <span className="text-gray-400 text-xs">(Optional)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -469,7 +467,6 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
                   }`}
                   min="0"
                   placeholder="Your target price"
-                  required
                   disabled={isSubmitting}
                 />
               </div>
@@ -483,9 +480,35 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
           </div>
 
           {/* Potential Return Preview */}
+          {formData.currentPrice && selectedStock && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-sm font-medium text-gray-700 mb-1">Current Return</div>
+              {(() => {
+                const currentPrice = parseFloat(formData.currentPrice);
+                const cmpPrice = selectedStock.cmp;
+                const returnAmount = cmpPrice - currentPrice;
+                const returnPercentage = (returnAmount / currentPrice) * 100;
+                
+                return (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      ₹{cmpPrice.toFixed(2)} - ₹{currentPrice.toFixed(2)}
+                    </span>
+                    <span className={`text-sm font-semibold ${
+                      returnAmount >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      ₹{returnAmount.toFixed(2)} ({returnPercentage >= 0 ? '+' : ''}{returnPercentage.toFixed(2)}%)
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Target Return Preview */}
           {formData.currentPrice && formData.targetPrice && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div className="text-sm font-medium text-gray-700 mb-1">Potential Return</div>
+              <div className="text-sm font-medium text-gray-700 mb-1">Target Return</div>
               {(() => {
                 const currentPrice = parseFloat(formData.currentPrice);
                 const targetPrice = parseFloat(formData.targetPrice);
@@ -495,7 +518,7 @@ export default function FocusStockModal({ isOpen, onClose, onSave, stock }: Focu
                 return (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
-                      ₹{targetPrice} - ₹{currentPrice}
+                      ₹{targetPrice.toFixed(2)} - ₹{currentPrice.toFixed(2)}
                     </span>
                     <span className={`text-sm font-semibold ${
                       returnAmount >= 0 ? 'text-green-600' : 'text-red-600'
