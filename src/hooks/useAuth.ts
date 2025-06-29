@@ -7,6 +7,7 @@ export const useAuth = () => {
     isAuthenticated: false,
     user: null,
   });
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Check for existing auth token on mount
@@ -60,6 +61,7 @@ export const useAuth = () => {
         }
       }
       
+      setIsAuthChecked(true);
       setLoading(false);
     };
 
@@ -210,7 +212,6 @@ export const useAuth = () => {
       });
       localStorage.removeItem('currentUser');
       localStorage.removeItem('authToken');
-      localStorage.removeItem('redirectAfterLogin');
       console.log('Logged out, storage cleared');
     }
   };
@@ -237,6 +238,7 @@ export const useAuth = () => {
   return {
     ...authState,
     loading,
+    isAuthChecked,
     signUp,
     login,
     verifyEmail,
