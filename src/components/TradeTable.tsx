@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trade } from '../types/Trade';
-import { TrendingUp, TrendingDown, Circle, CheckCircle2, Edit, Trash2, Target, Filter, SortAsc, Calendar, IndianRupee, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Circle, CheckCircle2, Edit, Trash2, Target, Filter, SortAsc, Calendar, IndianRupee, RefreshCw, Briefcase } from 'lucide-react';
 import ConfirmationModal from './ConfirmationModal';
 import MarkAsClosedModal from './MarkAsClosedModal';
 import { stockCsvService } from '../services/stockCsvService';
@@ -189,7 +189,7 @@ export default function TradeTable({
   return (
     <>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Filters and Sorting */}
+        {/* Filters and Sorting - Kept intact */}
         {showFilters && (
           <div className="p-4 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -247,156 +247,146 @@ export default function TradeTable({
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-20">Status</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-24">Symbol</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-24">CMP</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-16">Type</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-12">Qty</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-28">Entry</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-28">Exit</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-16">Aging</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-24">Return</th>
-                <th className="text-left py-3 px-3 font-semibold text-gray-700 w-16">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {displayTrades.map((trade) => {
-                const returnValue = calculateReturn(trade);
-                const aging = calculateAging(trade.entryDate, trade.exitDate);
+        {/* New Card-Based Layout */}
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {displayTrades.map((trade) => {
+            const returnValue = calculateReturn(trade);
+            const aging = calculateAging(trade.entryDate, trade.exitDate);
+            
+            return (
+              <div key={trade.id} className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                {/* Card Header with Symbol and Status */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">{getStockLogo(trade.symbol)}</span>
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 text-lg">{trade.symbol}</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center">
+                          <Briefcase className="w-3 h-3 text-gray-500 mr-1" />
+                          <span className="text-xs text-gray-600">{trade.quantity}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Calendar className="w-3 h-3 text-gray-500 mr-1" />
+                          <span className="text-xs text-gray-600">{aging} days</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-end">
+                    {/* Status Badge */}
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      trade.status === 'ACTIVE' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {trade.status === 'ACTIVE' ? 'Active' : 'Closed'}
+                    </div>
+                    
+                    {/* Trade Type */}
+                    <div className={`mt-1 flex items-center ${
+                      trade.type === 'BUY' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {trade.type === 'BUY' ? (
+                        <TrendingUp className="w-4 h-4" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </div>
+                </div>
                 
-                return (
-                  <tr key={trade.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-1">
-                        {trade.status === 'ACTIVE' ? (
-                          <div className="flex items-center space-x-1">
-                            <Circle className="w-3 h-3 text-blue-500 fill-current" />
-                            <span className="text-xs font-medium text-blue-600">Active</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-1">
-                            <CheckCircle2 className="w-3 h-3 text-blue-600" />
-                            <span className="text-xs font-medium text-blue-600">Closed</span>
-                          </div>
-                        )}
+                {/* Card Body with Price Information */}
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Entry Price */}
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Entry Price</div>
+                      <div className="flex items-center">
+                        <IndianRupee className="w-3 h-3 text-gray-600 mr-1" />
+                        <span className="font-semibold">{trade.entryPrice.toLocaleString('en-IN')}</span>
                       </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-1">
-                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-xs">{getStockLogo(trade.symbol)}</span>
-                        </div>
-                        <span className="font-semibold text-gray-900">{trade.symbol}</span>
+                      <div className="text-xs text-gray-500 mt-1">{formatDate(trade.entryDate)}</div>
+                    </div>
+                    
+                    {/* Exit Price or CMP */}
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        {trade.status === 'CLOSED' ? 'Exit Price' : 'Current Price'}
                       </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      {stockPrices[trade.symbol] ? (
-                        <div className="flex items-center space-x-1">
-                          <IndianRupee className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-900">{stockPrices[trade.symbol].toLocaleString('en-IN')}</span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-1">
-                        {trade.type === 'BUY' ? (
-                          <TrendingUp className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <TrendingDown className="w-3 h-3 text-red-500" />
-                        )}
-                        <span className={`text-xs font-medium ${
-                          trade.type === 'BUY' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {trade.type}
+                      <div className="flex items-center">
+                        <IndianRupee className="w-3 h-3 text-gray-600 mr-1" />
+                        <span className="font-semibold">
+                          {trade.status === 'CLOSED' && trade.exitPrice 
+                            ? trade.exitPrice.toLocaleString('en-IN')
+                            : stockPrices[trade.symbol] 
+                              ? stockPrices[trade.symbol].toLocaleString('en-IN')
+                              : '—'
+                          }
                         </span>
                       </div>
-                    </td>
-                    <td className="py-3 px-3 text-gray-900">{trade.quantity}</td>
-                    <td className="py-3 px-3">
-                      <div>
-                        <div className="flex items-center space-x-1">
-                          <IndianRupee className="w-3 h-3 text-gray-500" />
-                          <span className="text-gray-900">{trade.entryPrice.toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="text-xs text-gray-500">{formatDate(trade.entryDate)}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {trade.status === 'CLOSED' && trade.exitDate 
+                          ? formatDate(trade.exitDate)
+                          : 'Live'
+                        }
                       </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      {trade.exitPrice ? (
-                        <div>
-                          <div className="flex items-center space-x-1">
-                            <IndianRupee className="w-3 h-3 text-gray-500" />
-                            <span className="text-gray-900">{trade.exitPrice.toLocaleString('en-IN')}</span>
-                          </div>
-                          {trade.exitDate && (
-                            <div className="text-xs text-gray-500">{formatDate(trade.exitDate)}</div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 text-gray-500" />
-                        <span className="text-xs text-gray-600">
-                          <span className="font-medium">{aging}</span> days
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      {trade.status === 'CLOSED' ? (
-                        <div className={`font-semibold text-xs ${getReturnColor(returnValue)}`}>
-                          <div className="flex items-center space-x-1">
-                            <IndianRupee className="w-3 h-3" />
+                    </div>
+                  </div>
+                  
+                  {/* Return Information */}
+                  {trade.status === 'CLOSED' && (
+                    <div className={`mt-4 p-2 rounded-lg ${
+                      returnValue >= 0 ? 'bg-green-50' : 'bg-red-50'
+                    }`}>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium">Return</span>
+                        <div className={`font-bold ${getReturnColor(returnValue)}`}>
+                          <div className="flex items-center">
+                            <IndianRupee className="w-3 h-3 mr-1" />
                             <span>{returnValue.toLocaleString('en-IN')}</span>
                           </div>
-                          <div className="text-xs">
+                          <div className="text-xs text-right">
                             {((returnValue / (trade.entryPrice * trade.quantity)) * 100).toFixed(1)}%
                           </div>
                         </div>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center space-x-1">
-                        {trade.status === 'ACTIVE' && onUpdateTrade && (
-                          <button
-                            onClick={() => handleMarkAsClosedClick(trade)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-                            title="Mark as Closed"
-                          >
-                            <Target className="w-3 h-3" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onEditTrade(trade)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors p-1"
-                          title="Edit Trade"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(trade)}
-                          className="text-red-600 hover:text-red-800 transition-colors p-1"
-                          title="Delete Trade"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Card Footer with Actions */}
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end space-x-2">
+                  {trade.status === 'ACTIVE' && onUpdateTrade && (
+                    <button
+                      onClick={() => handleMarkAsClosedClick(trade)}
+                      className="p-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                      title="Mark as Closed"
+                    >
+                      <Target className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onEditTrade(trade)}
+                    className="p-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    title="Edit Trade"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(trade)}
+                    className="p-2 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                    title="Delete Trade"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
